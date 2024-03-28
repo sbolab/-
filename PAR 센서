@@ -1,0 +1,41 @@
+import pymysql
+from godirect import GoDirect
+import datetime
+
+godirect = GoDirect()
+device = godirect.get_device()
+
+
+
+if device is not None and device.open(auto_start=True):
+    device.start(period=2000)
+    sensors = device.get_enabled_sensors()
+
+    if device.read():
+        sensor = sensors[0]
+        current_time = datetime.datetime.now()
+        sensor_value = sensor.values[0]
+        print(f'{current_time} {sensor.sensor_description}: {sensor_value}')
+        
+        try:
+            connection_config = {
+            'host': '192.168.0.137',
+            'user': 'sbolab',
+            'password': '12345678',
+            'database': 'sbolab'
+            }
+
+            connection = pymysql.connect(**connection_config)
+            cursor = connection.cursor()
+            cursor.execute("INSERT INTO solar_radiation_data (Solar_Rad_data, Time, Sensor_ID) VALUES (%s, %s, 'default')",
+                       (sensor_value, current_time))
+            connection.commit()
+            print("Data inserted into the database.")
+        except pymysql.Error as e:
+            print(f"Error: {e}")
+
+    device.stop()
+    device.close()
+    godirect.quit()
+else:
+    print("Failed to connect to a device.")
