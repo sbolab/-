@@ -1,0 +1,50 @@
+import socket
+import pymysql
+import time
+
+connection_config = {
+    'host': ,
+    'user': ',
+    'password': ,
+    'database': 
+}
+
+
+def start_server():
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(("0.0.0.0", 8080))
+    server_socket.listen(1)
+    print("Server listening on port 8080")
+
+    try:
+        while True:
+            client_socket, addr = server_socket.accept()
+
+            data = client_socket.recv(1024).decode('utf-8')
+            print(f"Received data from Arduino: {data}")
+
+            connection = pymysql.connect(**connection_config)
+            cursor = connection.cursor()
+
+            current_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            data = data.split(',')
+
+            cursor.execute("INSERT INTO hum_data (Hum_data, Time, Sensor_ID) VALUES (%s, %s, 'default')",
+                           (float(data[0]), current_time))
+            cursor.execute("INSERT INTO temp_data (Temp_data, Time, Sensor_ID) VALUES (%s, %s, 'default')",
+                           (float(data[1]), current_time))
+            cursor.execute("INSERT INTO soil_hum_data (soil_hum_data, Time, Sensor_ID) VALUES (%s, %s, 'default')",
+                           (float(data[2]), current_time))
+
+            connection.commit()
+            client_socket.close()
+            time.sleep(5)
+
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server_socket.close()
+
+
+if __name__ == "__main__":
+    start_server()
