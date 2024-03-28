@@ -1,0 +1,52 @@
+import serial
+import pymysql
+import time
+
+ser = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
+
+def insert_data_into_db(wind_speed, wind_direction, precipitation):
+    connection_config = {
+        'host': '',
+        'user': '',
+        'password': '',
+        'database': ''
+    }
+
+    try:
+        connection = pymysql.connect(**connection_config)
+        cursor = connection.cursor()
+
+        current_time = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        cursor.execute("INSERT INTO preci_data (Preci_data, Time, Sensor_ID) VALUES (%s, %s, 'default')",
+                       (round(precipitation, 2), current_time))
+        cursor.execute("INSERT INTO wind_data (Wind_speed_data, Wind_direc_data, Time, Sensor_ID) VALUES (%s, %s, %s, 'default')",
+                       (round(wind_speed, 2), wind_direction, current_time))
+
+        connection.commit()
+        print("Data inserted into the database.")
+
+    except Exception as e:
+        print(f"Error inserting data into the database: {e}")
+
+def read_serial_data(ser):
+    try:
+        while True:
+            data = ser.readline().decode('utf-8').strip()
+            data = data.split(',')
+            print(data)
+            if all(data):
+                wind_speed = float(data[0])
+                wind_direction = data[1]
+                precipitation = float(data[2])
+
+                insert_data_into_db(wind_speed, wind_direction, precipitation)
+
+                time.sleep(5)
+
+    except KeyboardInterrupt:
+        ser.close()
+        print("Serial connection closed.")
+        
+        
+read_serial_data(ser)
