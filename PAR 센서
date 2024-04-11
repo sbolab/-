@@ -19,10 +19,10 @@ if device is not None and device.open(auto_start=True):
         
         try:
             connection_config = {
-            'host': '192.168.0.137',
-            'user': 'sbolab',
-            'password': '12345678',
-            'database': 'sbolab'
+            'host': '',
+            'user': '',
+            'password': '',
+            'database': ''
             }
 
             connection = pymysql.connect(**connection_config)
